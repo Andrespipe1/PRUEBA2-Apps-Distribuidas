@@ -73,7 +73,8 @@
 ## Autor
 
 - **Tecnología Superior en Desarrollo de Software**
-- Prof. Ing. Vanessa Guevara
+- Andres Tufiño
+- Darwin Cachimil
 
 ---
 
