@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - servidor1
+      - servidor2
+
+  servidor1:
+    build: ./servidor1
+    container_name: servidor1
+    environment:
+      - MYSQL_HOST=maestro
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=db_informacion
+      - MYSQL_PORT=3306
+    depends_on:
+      - maestro
+
+  servidor2:
+    build: ./servidor2
+    container_name: servidor2
+    environment:
+      - MYSQL_HOST=esclavo
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=db_informacion
+      - MYSQL_PORT=3306
+    depends_on:
+      - esclavo
+
+  maestro:
+    image: mysql:5.7
+    container_name: maestro
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db_informacion
+    ports:
+      - "3307:3306"
+    volumes:
+      - maestro_data:/var/lib/mysql
+      - ./maestro/conf.d:/etc/mysql/conf.d
+    command: --server-id=1 --log-bin=mysql-bin --binlog-do-db=db_informacion --gtid-mode=ON --enforce-gtid-consistency=ON --log-slave-updates=ON --skip-host-cache --skip-name-resolve
+
+  esclavo:
+    image: mysql:5.7
+    container_name: esclavo
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db_informacion
+    ports:
+      - "3308:3306"
+    volumes:
+      - esclavo_data:/var/lib/mysql
+      - ./esclavo/conf.d:/etc/mysql/conf.d
+    command: --server-id=2 --log-bin=mysql-bin --binlog-do-db=db_informacion --gtid-mode=ON --enforce-gtid-consistency=ON --log-slave-updates=ON --skip-host-cache --skip-name-resolve
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      - PMA_HOSTS=maestro,esclavo
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    ports:
+      - "8080:80"
+    depends_on:
+      - maestro
+      - esclavo
+
+volumes:
+  maestro_data:
+  esclavo_data:
+
+
